@@ -17,6 +17,7 @@ public class ItemSet implements Comparable {
         items.add(item);
         count = 0;
     }
+
     public ItemSet(ItemSet old, String item) {
         items = new TreeSet<>();
         for (String oldItem : old.items) {
@@ -58,5 +59,19 @@ public class ItemSet implements Comparable {
         ItemSet other = (ItemSet) o;
 
         return this.items.toString().compareTo(other.items.toString());
+    }
+
+    @Override
+    public String toString() {
+        if (this.size() > 0) {
+
+            StringBuilder itemString = new StringBuilder();
+            for (String item : this.items) {
+                itemString.append(item);
+                itemString.append(",");
+            }
+            itemString.deleteCharAt(itemString.length() - 1);
+            return itemString.toString();
+        } else return "{empty item set}";
     }
 }

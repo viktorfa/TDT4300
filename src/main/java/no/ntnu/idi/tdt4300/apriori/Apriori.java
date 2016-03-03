@@ -1,6 +1,7 @@
 package no.ntnu.idi.tdt4300.apriori;
 
 import org.apache.commons.cli.*;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -90,6 +91,23 @@ public class Apriori {
 
         System.out.println(occurences);
 
+        Set<ItemSet> itemSets = getItemSets(transactions, new HashMap<>(), minSupport, 100);
+
+        StringBuilder result = new StringBuilder();
+        result.append("size;items\n");
+
+        int setSize = 0;
+        for (ItemSet set : itemSets) {
+            setSize = set.size();
+            result.append(setSize);
+            result.append(';');
+            result.append(set);
+            result.append('\n');
+        }
+
+        return result.toString();
+
+        /*
         return "size;items\n" +
                 "1;beer\n" +
                 "1;bread\n" +
@@ -100,6 +118,7 @@ public class Apriori {
                 "2;bread,milk\n" +
                 "2;diapers,milk\n" +
                 "3;bread,diapers,milk\n";
+        */
     }
 
     public static Map<String, Set<Integer>> getOccurences(List<SortedSet<String>> transactions) {
@@ -122,17 +141,31 @@ public class Apriori {
         return result;
     }
 
+    public static int sizeOfLargestSet(List<SortedSet<String>> list) {
+        int result = 0;
+        for (SortedSet<String> setItem : list) {
+            if (setItem.size() > result) result = setItem.size();
+        }
+        return result;
+    }
+
     public static Set<ItemSet> getItemSets(
             List<SortedSet<String>> transactions,
             Map<ItemSet, Set<Integer>> occurences,
             int minSupport,
             int maxSize) {
+
+        int initialItemSets = occurences.size();
+
+        if ((sizeOfLargestSet(transactions)) < maxSize) return occurences.keySet();
         if (maxSize < 1) maxSize = 1;
         int currentMaxItemSetSize = 0;
-        for (Set<Integer> set : occurences.values()) {
+        for (ItemSet set : occurences.keySet()) {
             if (set.size() > currentMaxItemSetSize) currentMaxItemSetSize = set.size();
         }
         if (currentMaxItemSetSize >= maxSize) {
+            System.out.println("Returning because max item set size is reached");
+            System.out.println(String.format("Current: %d, Max: %d", currentMaxItemSetSize, maxSize));
             return occurences.keySet();
         }
         Set<ItemSet> result = new TreeSet<>();
@@ -145,10 +178,16 @@ public class Apriori {
                 }
             }
         }
-        Set<ItemSet> itemSets = new TreeSet<>(occurences.keySet());
+        System.out.println("Result:");
+        System.out.println(result);
+        Set<ItemSet> itemSets = new TreeSet<>(result);
         for (ItemSet itemSet : itemSets) {
             for (Map.Entry<String, Set<Integer>> entry : getOccurences(transactions).entrySet()) {
                 if (entry.getValue().size() >= minSupport) {
+                    if (itemSet.size() > 1) {
+                        System.out.println("Got large itemSet");
+                        System.out.println(itemSet);
+                    }
                     if (isNewItemSet(occurences.get(itemSet), entry.getValue(), minSupport)) {
                         result.add(new ItemSet(itemSet, entry.getKey()));
                         Set<Integer> newOccurences = new TreeSet<>();
@@ -162,14 +201,19 @@ public class Apriori {
                 }
             }
         }
-
-        result.addAll(getItemSets(transactions, occurences, minSupport, maxSize));
-        return result;
+        if (result.size() > initialItemSets) {
+            result.addAll(getItemSets(transactions, occurences, minSupport, maxSize));
+            return result;
+        } else return result;
     }
 
     public static boolean isNewItemSet(Set<Integer> itemSetOccurences, Set<Integer> itemOccurences, int minSupport) {
         Set<Integer> intersection = new TreeSet<>(itemOccurences);
         intersection.retainAll(itemSetOccurences);
+        System.out.println("Got itemSetOccurences:");
+        System.out.println(itemSetOccurences);
+        System.out.println("Got itemOccurences:");
+        System.out.println(itemOccurences);
         System.out.println("Got intersection:");
         System.out.println(intersection);
         if (intersection.size() >= minSupport) return true;

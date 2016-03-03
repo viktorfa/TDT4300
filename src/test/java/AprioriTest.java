@@ -104,6 +104,8 @@ public class AprioriTest {
     @Test
     public void testGetItemSetsWithSize3() {
         Set<ItemSet> actual = Apriori.getItemSets(transactions, new HashMap<ItemSet, Set<Integer>>(), 3, 3);
+        System.out.println("Transactions:");
+        System.out.println(transactions);
 
         ItemSet set1 = new ItemSet("bread");
         set1.addItem("milk");
@@ -113,9 +115,11 @@ public class AprioriTest {
         set2.addItem("eggs");
 
         System.out.println("Actual item sets:");
-        for (ItemSet itemSet : actual) {
-            System.out.println(itemSet.size());
-        }
+        System.out.println(actual);
+        System.out.println("set1:");
+        System.out.println(set1);
+        System.out.println("set2:");
+        System.out.println(set2);
 
         assertTrue(actual.contains(set1));
         assertFalse(actual.contains(set2));
@@ -178,10 +182,10 @@ public class AprioriTest {
         withMilk.add(5);
 
         Set<Integer> withBreadAndMilk = new TreeSet<>();
-        withMilk.add(0);
-        withMilk.add(3);
-        withMilk.add(4);
-        withMilk.add(5);
+        withBreadAndMilk.add(0);
+        withBreadAndMilk.add(3);
+        withBreadAndMilk.add(4);
+        withBreadAndMilk.add(5);
 
         Set<Integer> withEggs = new TreeSet<>();
         withEggs.add(1);
@@ -191,6 +195,43 @@ public class AprioriTest {
         assertTrue(Apriori.isNewItemSet(withMilk, Apriori.getOccurences(transactions).get("diapers"), 2));
         assertTrue(Apriori.isNewItemSet(withBreadAndMilk, Apriori.getOccurences(transactions).get("diapers"), 2));
         assertFalse(Apriori.isNewItemSet(withEggs, Apriori.getOccurences(transactions).get("diapers"), 2));
+    }
+
+    @Test
+    public void testCreateItemSetWithOldItemSet() {
+        ItemSet set1 = new ItemSet("rat");
+        set1.addItem("cow");
+
+        assertEquals(set1.size(), 2);
+
+        ItemSet set2 = new ItemSet(set1, "goat");
+        assertEquals(set2.size(), 3);
+
+        set1.addItem("goat");
+
+        assertEquals(set1, set2);
+    }
+
+    @Test
+    public void testSizeOfLargestSet() {
+        List<SortedSet<String>> list = new LinkedList<>();
+        SortedSet<String> set1 = new TreeSet<>();
+        SortedSet<String> set2 = new TreeSet<>();
+        SortedSet<String> set3 = new TreeSet<>();
+        set1.add("a");
+        set1.add("b");
+        set1.add("c");
+        set2.add("a");
+        set2.add("c");
+        list.add(set1);
+        list.add(set2);
+        list.add(set3);
+
+        assertEquals(Apriori.sizeOfLargestSet(list), 3);
+        list.remove(set1);
+        assertEquals(Apriori.sizeOfLargestSet(list), 2);
+        list.clear();
+        assertEquals(Apriori.sizeOfLargestSet(list), 0);
     }
 
 }

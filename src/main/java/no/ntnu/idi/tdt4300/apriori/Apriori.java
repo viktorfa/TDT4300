@@ -79,6 +79,17 @@ public class Apriori {
     public static String generateFrequentItemsets(List<SortedSet<String>> transactions, double support) {
         // TODO: Generate and print frequent itemsets given the method parameters.
 
+        System.out.println("Transactions:");
+        System.out.println(transactions);
+
+        int minSupport = (int) (transactions.size() * support);
+
+        System.out.println("minSupport: " + minSupport);
+
+        Map<String, Set<Integer>> occurences = getOccurences(transactions);
+
+        System.out.println(occurences);
+
         return "size;items\n" +
                 "1;beer\n" +
                 "1;bread\n" +
@@ -89,6 +100,80 @@ public class Apriori {
                 "2;bread,milk\n" +
                 "2;diapers,milk\n" +
                 "3;bread,diapers,milk\n";
+    }
+
+    public static Map<String, Set<Integer>> getOccurences(List<SortedSet<String>> transactions) {
+        Map<String, Set<Integer>> result = new HashMap<>();
+
+        int counter = 0;
+        for (SortedSet<String> transaction : transactions) {
+            for (String item : transaction) {
+                if (result.containsKey(item)) {
+                    result.get(item).add(counter);
+                } else {
+                    TreeSet<Integer> transactionSet = new TreeSet<>();
+                    transactionSet.add(counter);
+                    result.put(item, transactionSet);
+                }
+            }
+            counter++;
+        }
+
+        return result;
+    }
+
+    public static Set<ItemSet> getItemSets(
+            List<SortedSet<String>> transactions,
+            Map<ItemSet, Set<Integer>> occurences,
+            int minSupport,
+            int maxSize) {
+        if (maxSize < 1) maxSize = 1;
+        int currentMaxItemSetSize = 0;
+        for (Set<Integer> set : occurences.values()) {
+            if (set.size() > currentMaxItemSetSize) currentMaxItemSetSize = set.size();
+        }
+        if (currentMaxItemSetSize >= maxSize) {
+            return occurences.keySet();
+        }
+        Set<ItemSet> result = new TreeSet<>();
+
+        if (occurences.isEmpty()) {
+            for (Map.Entry<String, Set<Integer>> entry : getOccurences(transactions).entrySet()) {
+                if (entry.getValue().size() >= minSupport) {
+                    result.add(new ItemSet(entry.getKey()));
+                    occurences.put(new ItemSet(entry.getKey()), entry.getValue());
+                }
+            }
+        }
+        Set<ItemSet> itemSets = new TreeSet<>(occurences.keySet());
+        for (ItemSet itemSet : itemSets) {
+            for (Map.Entry<String, Set<Integer>> entry : getOccurences(transactions).entrySet()) {
+                if (entry.getValue().size() >= minSupport) {
+                    if (isNewItemSet(occurences.get(itemSet), entry.getValue(), minSupport)) {
+                        result.add(new ItemSet(itemSet, entry.getKey()));
+                        Set<Integer> newOccurences = new TreeSet<>();
+                        for (int i : entry.getValue()) {
+                            if (occurences.get(itemSet).contains(i)) {
+                                newOccurences.add(i);
+                            }
+                        }
+                        occurences.put(new ItemSet(itemSet, entry.getKey()), newOccurences);
+                    }
+                }
+            }
+        }
+
+        result.addAll(getItemSets(transactions, occurences, minSupport, maxSize));
+        return result;
+    }
+
+    public static boolean isNewItemSet(Set<Integer> itemSetOccurences, Set<Integer> itemOccurences, int minSupport) {
+        Set<Integer> intersection = new TreeSet<>(itemOccurences);
+        intersection.retainAll(itemSetOccurences);
+        System.out.println("Got intersection:");
+        System.out.println(intersection);
+        if (intersection.size() >= minSupport) return true;
+        else return false;
     }
 
     /**

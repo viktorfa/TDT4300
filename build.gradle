@@ -4,7 +4,7 @@ version '1.0'
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
-sourceCompatibility = 1.6
+sourceCompatibility = 1.8
 
 // creates an executable JAR file including dependencies and sources
 task createJar(type: Jar) {

@@ -1,10 +1,14 @@
 package no.ntnu.idi.tdt4300.apriori;
 
+import javafx.util.Pair;
 import org.apache.commons.cli.*;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.BinaryOperator;
+import java.util.stream.Stream;
 
 /**
  * This is the main class of the association rule generator.
@@ -69,6 +73,27 @@ public class Apriori {
         return itemSets;
     }
 
+    public static void insertTree(SortedSet<Item> transaction, FPTree tree) {
+        if (transaction.isEmpty()) return;
+        SortedSet<Item> transactionCopy = new TreeSet<>();
+        for (Item item : transaction) transactionCopy.add(item);
+        Item item = transactionCopy.first();
+        transactionCopy.remove(item);
+
+        for (FPTree child : tree.getChildren()) {
+            if (child.item.equals(item.item)) {
+                child.count++;
+                insertTree(transactionCopy, child);
+                break;
+            }
+        }
+        // have not found the item among children
+        FPTree newNode = new FPTree(item.item, tree);
+        tree.addChild(newNode);
+        insertTree(transactionCopy, newNode);
+    }
+
+
     /**
      * Generates the frequent itemsets given the support threshold. The results are returned in CSV format.
      *
@@ -78,6 +103,36 @@ public class Apriori {
      */
     public static String generateFrequentItemsets(List<SortedSet<String>> transactions, double support) {
         // TODO: Generate and print frequent itemsets given the method parameters.
+        System.out.println("Generating item sets");
+        System.out.println(transactions);
+        System.out.println(support);
+
+        Map<String, Integer> frequencyMap = new TreeMap<String, Integer>();
+
+        for (SortedSet<String> transaction : transactions) {
+            for (String item : transaction) {
+                if (frequencyMap.containsKey(item)) {
+                    frequencyMap.put(item, frequencyMap.get(item) + 1);
+                } else {
+                    frequencyMap.put(item, 1);
+                }
+            }
+        }
+        assert frequencyMap.get("bread") == 5;
+        assert frequencyMap.get("bread") != 6;
+
+        SortedSet<Item> sortedTransaction = new TreeSet<>();
+
+
+        FPTree tree = new FPTree();
+
+        for (SortedSet<String> transaction : transactions) {
+            insertTree(getSortedTransaction(transaction, frequencyMap), tree);
+        }
+
+        System.out.println("FPTree:");
+        System.out.println(tree);
+
 
         return "size;items\n" +
                 "1;beer\n" +
@@ -91,6 +146,15 @@ public class Apriori {
                 "3;bread,diapers,milk\n";
     }
 
+    public static SortedSet<Item> getSortedTransaction(SortedSet<String> transactions, Map<String, Integer> frequencyMap) {
+        SortedSet<Item> result = new TreeSet<>();
+        for (String item : transactions) {
+            result.add(new Item(item, frequencyMap.get(item)));
+        }
+        return result;
+    }
+
+
     /**
      * Generates the association rules given the support and confidence threshold. The results are returned in CSV
      * format.
@@ -102,6 +166,11 @@ public class Apriori {
      */
     public static String generateAssociationRules(List<SortedSet<String>> transactions, double support, double confidence) {
         // TODO: Generate and print association rules given the method parameters.
+
+        System.out.println("Generating association rules");
+        System.out.println(transactions);
+        System.out.println(support);
+        System.out.println(confidence);
 
         return "antecedent;consequent;confidence;support\n" +
                 "diapers;beer;0.6;0.5\n" +

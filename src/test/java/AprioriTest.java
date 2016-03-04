@@ -25,7 +25,10 @@ public class AprioriTest {
     private static final double SUPPORT = 0.5;
     private static final double CONFIDENCE = 0.5;
 
+
     private static List<SortedSet<String>> transactions;
+
+    private static double DELTA = 0.00001d;
 
     @BeforeClass
     public static void setUp() throws Exception {
@@ -38,6 +41,8 @@ public class AprioriTest {
     @Test
     public void testGenerateFrequentItemsets() throws Exception {
         String csvOutput = Apriori.generateFrequentItemsets(transactions, SUPPORT);
+        System.out.println("Actual frequent item sets:");
+        System.out.println(csvOutput);
         Pattern pattern = Pattern.compile("size;items\n(\\d+;([-_\\w]+,)*[-_\\w]+\n)*");
         assertTrue(pattern.matcher(csvOutput).matches());
     }
@@ -45,6 +50,8 @@ public class AprioriTest {
     @Test
     public void testGenerateAssociationRules() throws Exception {
         String csvOutput = Apriori.generateAssociationRules(transactions, SUPPORT, CONFIDENCE);
+        System.out.println("Actual association rules:");
+        System.out.println(csvOutput);
         Pattern pattern = Pattern.compile("antecedent;consequent;confidence;support\n(([-_\\w]+,)*[-_\\w]+;([-_\\w]+,)*[-_\\w]+;\\d.\\d{1,2};\\d.\\d{1,2}\n)*");
         assertTrue(pattern.matcher(csvOutput).matches());
     }
@@ -232,6 +239,73 @@ public class AprioriTest {
         assertEquals(Apriori.sizeOfLargestSet(list), 2);
         list.clear();
         assertEquals(Apriori.sizeOfLargestSet(list), 0);
+    }
+
+    @Test
+    public void testPowerSet() {
+        ItemSet itemSet1 = new ItemSet();
+        itemSet1.addItem("eggs");
+        itemSet1.addItem("bacon");
+        itemSet1.addItem("chicken");
+
+        Set<ItemSet> actual = Apriori.powerSet(itemSet1);
+
+        System.out.println("actual power set:");
+        System.out.println(actual);
+
+        ItemSet expected1 = new ItemSet("eggs");
+        ItemSet expected2 = new ItemSet(expected1, "bacon");
+        ItemSet expected3 = new ItemSet(expected1, "chicken");
+        ItemSet notExpected1 = new ItemSet(expected3, "maple syrup");
+
+        assertTrue(actual.contains(expected1));
+        assertTrue(actual.contains(expected2));
+        assertTrue(actual.contains(expected3));
+        assertFalse(actual.contains(notExpected1));
+
+    }
+
+    @Test
+    public void testSupportCount() {
+        ItemSet itemSet1 = new ItemSet();
+        ItemSet itemSet2 = new ItemSet();
+
+        itemSet1.addItem("beer");
+        itemSet1.addItem("diapers");
+
+        itemSet2.addItem("beer");
+
+        double actual = Apriori.supportCount(itemSet1, itemSet2, transactions);
+
+        assertEquals(1d, actual, DELTA);
+
+        itemSet1.clear();
+        itemSet2.clear();
+
+        itemSet1.addItem("bread");
+        itemSet1.addItem("milk");
+        itemSet1.addItem("diapers");
+
+        itemSet2.addItem("bread");
+        itemSet2.addItem("milk");
+
+        actual = Apriori.supportCount(itemSet1, itemSet2, transactions);
+        assertEquals(0.75d, actual, DELTA);
+
+        System.out.println(String.format("actual support count: %f", actual));
+    }
+
+    @Test
+    public void testGetSupportOfItemSet() {
+        ItemSet set1 = new ItemSet("cola");
+
+        double actual = Apriori.getSupportOfItemSet(set1, transactions);
+
+        assertEquals(2d / 6d, actual, DELTA);
+
+        set1.addItem("beer");
+        actual = Apriori.getSupportOfItemSet(set1, transactions);
+        assertEquals(1d / 6d, actual, DELTA);
     }
 
 }

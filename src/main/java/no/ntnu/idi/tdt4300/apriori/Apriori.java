@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This is the main class of the association rule generator.
@@ -96,8 +97,11 @@ public class Apriori {
         StringBuilder result = new StringBuilder();
         result.append("size;items\n");
 
+        System.out.println("itemSets from generateFrequentItemsets:");
+        System.out.println(itemSets);
+
         int setSize = 0;
-        for (ItemSet set : itemSets) {
+        for (ItemSet set : itemSets.stream().sorted().collect(Collectors.toList())) {
             setSize = set.size();
             result.append(setSize);
             result.append(';');
@@ -155,9 +159,15 @@ public class Apriori {
             int minSupport,
             int maxSize) {
 
+        System.out.println("Called getItemSets");
+        System.out.println("transactions");
+        System.out.println(transactions);
+        System.out.println("occurences");
+        System.out.println(occurences);
+        System.out.println(String.format("minSupport: %d, maxSize: %d", minSupport, maxSize));
+
         int initialItemSets = occurences.size();
 
-        if ((sizeOfLargestSet(transactions)) < maxSize) return occurences.keySet();
         if (maxSize < 1) maxSize = 1;
         int currentMaxItemSetSize = 0;
         for (ItemSet set : occurences.keySet()) {
@@ -180,7 +190,7 @@ public class Apriori {
         }
         System.out.println("Result:");
         System.out.println(result);
-        Set<ItemSet> itemSets = new TreeSet<>(result);
+        Set<ItemSet> itemSets = new TreeSet<>(occurences.keySet());
         for (ItemSet itemSet : itemSets) {
             for (Map.Entry<String, Set<Integer>> entry : getOccurences(transactions).entrySet()) {
                 if (entry.getValue().size() >= minSupport) {
@@ -200,6 +210,7 @@ public class Apriori {
                     }
                 }
             }
+            occurences.remove(itemSet);
         }
         if (result.size() > initialItemSets) {
             result.addAll(getItemSets(transactions, occurences, minSupport, maxSize));
@@ -232,6 +243,45 @@ public class Apriori {
     public static String generateAssociationRules(List<SortedSet<String>> transactions, double support, double confidence) {
         // TODO: Generate and print association rules given the method parameters.
 
+        System.out.println("transactions:");
+        System.out.println(transactions);
+        System.out.println("support:");
+        System.out.println(support);
+        System.out.println("confidence:");
+        System.out.println(confidence);
+        int minSupport = (int) (transactions.size() * support);
+        Set<ItemSet> itemSets = getItemSets(transactions, new HashMap<>(), minSupport, 100);
+
+        StringBuilder result = new StringBuilder();
+        result.append("antecedent;consequent;confidence;support\n");
+
+        for (ItemSet itemSet : itemSets.stream().sorted().collect(Collectors.toList())) {
+            Set<ItemSet> powerSet = powerSet(itemSet);
+            powerSet.remove(new ItemSet());
+            powerSet.remove(itemSet);
+
+
+            double itemSetConfidence = 0d;
+            for (ItemSet subset : powerSet) {
+                itemSetConfidence = supportCount(itemSet, subset, transactions);
+                ItemSet antecedent = itemSet.intersection(subset);
+                ItemSet consequent = itemSet.exclusion(subset);
+
+                result.append(antecedent);
+                result.append(';');
+                result.append(consequent);
+                result.append(';');
+                result.append(String.format("%.2f", itemSetConfidence));
+                result.append(';');
+                result.append(String.format("%.2f", getSupportOfItemSet(itemSet, transactions)));
+                result.append('\n');
+            }
+
+        }
+
+        return result.toString();
+
+        /*
         return "antecedent;consequent;confidence;support\n" +
                 "diapers;beer;0.6;0.5\n" +
                 "beer;diapers;1.0;0.5\n" +
@@ -247,6 +297,50 @@ public class Apriori {
                 "bread;diapers,milk;0.6;0.5\n" +
                 "milk;bread,diapers;0.6;0.5\n" +
                 "diapers;bread,milk;0.6;0.5\n";
+        */
+    }
+
+    public static double supportCount(ItemSet set1, ItemSet set2, List<SortedSet<String>> transactions) {
+        int set1SupportCount = 0;
+        int set2SupportCount = 0;
+
+        for (SortedSet<String> transaction : transactions) {
+            if (transaction.containsAll(set1.getItems())) {
+                set1SupportCount++;
+            }
+            if (transaction.containsAll(set2.getItems())) {
+                set2SupportCount++;
+            }
+        }
+        if (set2SupportCount == 0) return 0d;
+
+        else return ((double) set1SupportCount) / ((double) set2SupportCount);
+    }
+
+    public static Set<ItemSet> powerSet(ItemSet originalSet) {
+        Set<ItemSet> sets = new HashSet<>();
+        if (originalSet.isEmpty()) {
+            sets.add(new ItemSet());
+            return sets;
+        }
+        List<ItemSet> list = originalSet.toArrayList();
+        ItemSet head = list.get(0);
+        ItemSet rest = new ItemSet(list.subList(1, list.size()));
+        for (ItemSet set : powerSet(rest)) {
+            ItemSet newSet = new ItemSet(head);
+            newSet.addAll(set);
+            sets.add(newSet);
+            sets.add(set);
+        }
+        return sets;
+    }
+
+    public static double getSupportOfItemSet(ItemSet itemSet, List<SortedSet<String>> transactions) {
+        int counter = 0;
+        for (SortedSet<String> transaction : transactions) {
+            if (transaction.containsAll(itemSet.getItems())) counter++;
+        }
+        return ((double) counter) / ((double) transactions.size());
     }
 
     /**

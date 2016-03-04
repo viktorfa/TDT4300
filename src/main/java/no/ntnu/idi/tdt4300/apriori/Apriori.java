@@ -5,6 +5,7 @@ import org.apache.commons.cli.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -79,16 +80,13 @@ public class Apriori {
      * @return frequent itemsets in CSV format with columns size and items; columns are semicolon-separated and items are comma-separated
      */
     public static String generateFrequentItemsets(List<SortedSet<String>> transactions, double support) {
-        // TODO: Generate and print frequent itemsets given the method parameters.
-
-
         int minSupport = (int) (transactions.size() * support);
 
 
         Map<String, Set<Integer>> occurences = getOccurences(transactions);
 
 
-        Set<ItemSet> itemSets = getItemSets(transactions, new HashMap<>(), minSupport, 100);
+        Set<ItemSet> itemSets = getItemSets(transactions, new HashMap<>(), minSupport);
 
         StringBuilder result = new StringBuilder();
         result.append("size;items\n");
@@ -104,21 +102,14 @@ public class Apriori {
         }
 
         return result.toString();
-
-        /*
-        return "size;items\n" +
-                "1;beer\n" +
-                "1;bread\n" +
-                "1;diapers\n" +
-                "1;milk\n" +
-                "2;beer,diapers\n" +
-                "2;bread,diapers\n" +
-                "2;bread,milk\n" +
-                "2;diapers,milk\n" +
-                "3;bread,diapers,milk\n";
-        */
     }
 
+    /**
+     * Creates a map from each item in a list of transactions mapped to a set of integers representing the transaction
+     * that contains the item by its index in the transactions list.
+     * @param transactions
+     * @return Mapping between items and the transaction in which they are found. E.g. "eggs" -> [3, 4]
+     */
     public static Map<String, Set<Integer>> getOccurences(List<SortedSet<String>> transactions) {
         Map<String, Set<Integer>> result = new HashMap<>();
 
@@ -139,7 +130,12 @@ public class Apriori {
         return result;
     }
 
-    public static int sizeOfLargestSet(List<SortedSet<String>> list) {
+    /**
+     * Finds the size of the largest set in a collection of sets.
+     * @param list A collection containing sets.
+     * @return Integer the size of the largest set in the list.
+     */
+    public static int sizeOfLargestSet(Collection<SortedSet<String>> list) {
         int result = 0;
         for (SortedSet<String> setItem : list) {
             if (setItem.size() > result) result = setItem.size();
@@ -147,24 +143,25 @@ public class Apriori {
         return result;
     }
 
+    /**
+     * Recursively finds frequent item sets in a list of transactions. This is the implementation of the Apriori
+     * algorithm.
+     * @param transactions
+     * @param occurences Mapping from ItemSet to a set of integers representing the transactions in which item sets
+     *                   occur. Can be an empty HashMap initally, but is filled when called recursively.
+     * @param minSupport Integer representing the minimum number of occurences an item set needs to be counted.
+     * @return All item sets that are frequent according to the transactions and the minSupport.
+     */
     public static Set<ItemSet> getItemSets(
             List<SortedSet<String>> transactions,
             Map<ItemSet, Set<Integer>> occurences,
-            int minSupport,
-            int maxSize) {
+            int minSupport) {
 
-        int initialItemSets = occurences.size();
+        int initialItemSets = occurences.size(); // Used to know when to end recursive call at the end of the function
 
-        if (maxSize < 1) maxSize = 1;
-        int currentMaxItemSetSize = 0;
-        for (ItemSet set : occurences.keySet()) {
-            if (set.size() > currentMaxItemSetSize) currentMaxItemSetSize = set.size();
-        }
-        if (currentMaxItemSetSize >= maxSize) {
-            return occurences.keySet();
-        }
         Set<ItemSet> result = new TreeSet<>();
 
+        // We create a map of the occurences of single items that are within the support limit.
         if (occurences.isEmpty()) {
             for (Map.Entry<String, Set<Integer>> entry : getOccurences(transactions).entrySet()) {
                 if (entry.getValue().size() >= minSupport) {
@@ -173,12 +170,10 @@ public class Apriori {
                 }
             }
         }
-        Set<ItemSet> itemSets = new TreeSet<>(occurences.keySet());
+        Set<ItemSet> itemSets = new TreeSet<>(occurences.keySet()); // The item sets we might extend in this iteration
         for (ItemSet itemSet : itemSets) {
             for (Map.Entry<String, Set<Integer>> entry : getOccurences(transactions).entrySet()) {
                 if (entry.getValue().size() >= minSupport) {
-                    if (itemSet.size() > 1) {
-                    }
                     if (isNewItemSet(occurences.get(itemSet), entry.getValue(), minSupport)) {
                         result.add(new ItemSet(itemSet, entry.getKey()));
                         Set<Integer> newOccurences = new TreeSet<>();
@@ -193,12 +188,21 @@ public class Apriori {
             }
             occurences.remove(itemSet);
         }
+        // If any new item sets were added this iteration, we might find new ones in a new iteration.
         if (result.size() > initialItemSets) {
-            result.addAll(getItemSets(transactions, occurences, minSupport, maxSize));
+            result.addAll(getItemSets(transactions, occurences, minSupport));
             return result;
         } else return result;
     }
 
+    /**
+     * Helper function to getItemSets used to decide whether a union of an item set and a single item will form a new
+     * frequent item set.
+     * @param itemSetOccurences Set of integers where the item set is found in the transaction list.
+     * @param itemOccurences Set of integers where the single item is found in the transaction list.
+     * @param minSupport Integer representing the minimum number of occurences needed for the item set to be frequent.
+     * @return Boolean of whether the union of the item set and the single item is frequent or not.
+     */
     public static boolean isNewItemSet(Set<Integer> itemSetOccurences, Set<Integer> itemOccurences, int minSupport) {
         Set<Integer> intersection = new TreeSet<>(itemOccurences);
         intersection.retainAll(itemSetOccurences);
@@ -216,10 +220,8 @@ public class Apriori {
      * @return association rules in CSV format with columns antecedent, consequent, confidence and support; columns are semicolon-separated and items are comma-separated
      */
     public static String generateAssociationRules(List<SortedSet<String>> transactions, double support, double confidence) {
-        // TODO: Generate and print association rules given the method parameters.
-
         int minSupport = (int) (transactions.size() * support);
-        Set<ItemSet> itemSets = getItemSets(transactions, new HashMap<>(), minSupport, 100);
+        Set<ItemSet> itemSets = getItemSets(transactions, new HashMap<>(), minSupport);
 
         StringBuilder result = new StringBuilder();
         result.append("antecedent;consequent;confidence;support\n");
@@ -230,7 +232,7 @@ public class Apriori {
             powerSet.remove(itemSet);
 
 
-            double itemSetConfidence = 0d;
+            double itemSetConfidence;
             for (ItemSet subset : powerSet) {
                 itemSetConfidence = supportCount(itemSet, subset, transactions);
                 ItemSet antecedent = itemSet.intersection(subset);
@@ -240,35 +242,38 @@ public class Apriori {
                 result.append(';');
                 result.append(consequent);
                 result.append(';');
-                result.append(String.format("%.2f", itemSetConfidence));
+                result.append(niceFloatFormat(itemSetConfidence));
                 result.append(';');
-                result.append(String.format("%.2f", getSupportOfItemSet(itemSet, transactions)));
+                result.append(niceFloatFormat(getSupportOfItemSet(itemSet, transactions)));
                 result.append('\n');
             }
 
         }
 
         return result.toString();
-
-        /*
-        return "antecedent;consequent;confidence;support\n" +
-                "diapers;beer;0.6;0.5\n" +
-                "beer;diapers;1.0;0.5\n" +
-                "diapers;bread;0.8;0.67\n" +
-                "bread;diapers;0.8;0.67\n" +
-                "milk;bread;0.8;0.67\n" +
-                "bread;milk;0.8;0.67\n" +
-                "milk;diapers;0.8;0.67\n" +
-                "diapers;milk;0.8;0.67\n" +
-                "diapers,milk;bread;0.75;0.5\n" +
-                "bread,milk;diapers;0.75;0.5\n" +
-                "bread,diapers;milk;0.75;0.5\n" +
-                "bread;diapers,milk;0.6;0.5\n" +
-                "milk;bread,diapers;0.6;0.5\n" +
-                "diapers;bread,milk;0.6;0.5\n";
-        */
     }
 
+    /**
+     * Formats a double to the lowest necessary precision to avoid trailing zeroes.
+     * @param d
+     * @return
+     */
+    public static String niceFloatFormat(double d) {
+        BigDecimal bd =  new BigDecimal(d).setScale(2, BigDecimal.ROUND_HALF_UP);
+        String result = String.format("%s", bd);
+
+        if (result.endsWith("0")) return result.substring(0, result.length() - 1);
+        else return result;
+    }
+
+    /**
+     * Helper function for the generateAssociationRules function used to find the support ratio for two item sets.
+     * @param set1 Set whose support count is the numerator.
+     * @param set2 Set whose support count is the denominator.
+     * @param transactions
+     * @return Double between 0 and 1 representing the ratio of occurences between set1 and set2 in the transaction
+     * list.
+     */
     public static double supportCount(ItemSet set1, ItemSet set2, List<SortedSet<String>> transactions) {
         int set1SupportCount = 0;
         int set2SupportCount = 0;
@@ -286,6 +291,11 @@ public class Apriori {
         else return ((double) set1SupportCount) / ((double) set2SupportCount);
     }
 
+    /**
+     * Creates a power set (all subsets) of an item set.
+     * @param originalSet
+     * @return Power set of originalSet.
+     */
     public static Set<ItemSet> powerSet(ItemSet originalSet) {
         Set<ItemSet> sets = new HashSet<>();
         if (originalSet.isEmpty()) {
@@ -304,6 +314,13 @@ public class Apriori {
         return sets;
     }
 
+    /**
+     * Helper function for the generateAssociationRules function used to get the ratio of occurences an item set has
+     * in a list of transactions.
+     * @param itemSet
+     * @param transactions
+     * @return Ratio of occurences if item set in transactions.
+     */
     public static double getSupportOfItemSet(ItemSet itemSet, List<SortedSet<String>> transactions) {
         int counter = 0;
         for (SortedSet<String> transaction : transactions) {

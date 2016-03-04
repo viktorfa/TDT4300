@@ -42,6 +42,8 @@ public class AprioriTest {
     @Test
     public void testGenerateFrequentItemsets() throws Exception {
         String csvOutput = Apriori.generateFrequentItemsets(transactions, SUPPORT);
+        System.out.println("Generated frequent item sets:");
+        System.out.println(csvOutput);
         Pattern pattern = Pattern.compile("size;items\n(\\d+;([-_\\w]+,)*[-_\\w]+\n)*");
         assertTrue(pattern.matcher(csvOutput).matches());
     }
@@ -49,6 +51,8 @@ public class AprioriTest {
     @Test
     public void testGenerateAssociationRules() throws Exception {
         String csvOutput = Apriori.generateAssociationRules(transactions, SUPPORT, CONFIDENCE);
+        System.out.println("Generated association rules:");
+        System.out.println(csvOutput);
         Pattern pattern = Pattern.compile("antecedent;consequent;confidence;support\n(([-_\\w]+,)*[-_\\w]+;([-_\\w]+,)*[-_\\w]+;\\d.\\d{1,2};\\d.\\d{1,2}\n)*");
         assertTrue(pattern.matcher(csvOutput).matches());
     }
@@ -72,7 +76,7 @@ public class AprioriTest {
 
     @Test
     public void testGetItemSetsWithSize1() {
-        Set<ItemSet> actual = Apriori.getItemSets(transactions, new HashMap<ItemSet, Set<Integer>>(), 3, 0);
+        Set<ItemSet> actual = Apriori.getItemSets(transactions, new HashMap<ItemSet, Set<Integer>>(), 3);
 
         ItemSet set1 = new ItemSet("bread");
         ItemSet set2 = new ItemSet("milk");
@@ -86,7 +90,7 @@ public class AprioriTest {
 
     @Test
     public void testGetItemSetsWithSize2() {
-        Set<ItemSet> actual = Apriori.getItemSets(transactions, new HashMap<ItemSet, Set<Integer>>(), 3, 2);
+        Set<ItemSet> actual = Apriori.getItemSets(transactions, new HashMap<ItemSet, Set<Integer>>(), 3);
 
         ItemSet set1 = new ItemSet("bread");
         set1.addItem("milk");
@@ -103,7 +107,7 @@ public class AprioriTest {
 
     @Test
     public void testGetItemSetsWithSize3() {
-        Set<ItemSet> actual = Apriori.getItemSets(transactions, new HashMap<ItemSet, Set<Integer>>(), 3, 3);
+        Set<ItemSet> actual = Apriori.getItemSets(transactions, new HashMap<ItemSet, Set<Integer>>(), 3);
 
         ItemSet set1 = new ItemSet("bread");
         set1.addItem("milk");

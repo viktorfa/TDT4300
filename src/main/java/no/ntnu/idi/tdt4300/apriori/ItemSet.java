@@ -1,22 +1,26 @@
 package no.ntnu.idi.tdt4300.apriori;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+/**
+ * Class used to represent and item set. Behaves much like a regular set, but has some special constructors and other
+ * helpful to make this task easier.
+ */
 public class ItemSet implements Comparable {
+    // Set of the items this item set contains.
     private SortedSet<String> items;
-    private int count;
+
+    /*
+    Many constructors that are hopefully not too hard to understand without documentation.
+     */
 
     public ItemSet() {
         items = new TreeSet<>();
-        count = 0;
     }
 
     public ItemSet(String item) {
         items = new TreeSet<>();
         items.add(item);
-        count = 0;
     }
 
     public ItemSet(ItemSet old, String item) {
@@ -25,7 +29,6 @@ public class ItemSet implements Comparable {
             this.items.add(oldItem);
         }
         items.add(item);
-        count = 0;
     }
 
     public ItemSet(ItemSet old) {
@@ -33,7 +36,6 @@ public class ItemSet implements Comparable {
         for (String oldItem : old.items) {
             this.items.add(oldItem);
         }
-        count = 0;
     }
 
     public ItemSet(List<ItemSet> sets) {
@@ -41,22 +43,33 @@ public class ItemSet implements Comparable {
         for (ItemSet itemSet : sets) {
             this.items.addAll(itemSet.items);
         }
-        count = 0;
     }
 
     public ItemSet(Set<String> items) {
         this.items = new TreeSet<>();
         this.items.addAll(items);
-        count = 0;
     }
 
+    /*
+    End constructors.
+     */
 
+    /**
+     * Adds all items from another item set to this.
+     *
+     * @param set
+     */
     public void addAll(ItemSet set) {
         for (String item : set.items) {
             this.addItem(item);
         }
     }
 
+    /**
+     * Adds one item to this.
+     *
+     * @param item
+     */
     public void addItem(String item) {
         this.items.add(item);
     }
@@ -69,6 +82,10 @@ public class ItemSet implements Comparable {
         return this.items.isEmpty();
     }
 
+    /**
+     * Creates an ArrayList of item sets - one for each item in this.
+     * @return
+     */
     public ArrayList<ItemSet> toArrayList() {
         ArrayList<ItemSet> result = new ArrayList<>();
         for (String item : this.items) {
@@ -96,6 +113,11 @@ public class ItemSet implements Comparable {
     }
 
 
+    /**
+     * Sorts by size ascending and then lexically.
+     * @param o
+     * @return
+     */
     @Override
     public int compareTo(Object o) {
         ItemSet other = (ItemSet) o;
@@ -108,6 +130,10 @@ public class ItemSet implements Comparable {
 
     }
 
+    /**
+     * String in csv format for a single cell.
+     * @return
+     */
     @Override
     public String toString() {
         if (this.size() > 0) {
@@ -120,14 +146,6 @@ public class ItemSet implements Comparable {
             itemString.deleteCharAt(itemString.length() - 1);
             return itemString.toString();
         } else return "{empty item set}";
-    }
-
-    public boolean contains(ItemSet other) {
-        return this.items.containsAll(other.items);
-    }
-
-    public boolean contains(Set<String> other) {
-        return this.items.containsAll(other);
     }
 
     public SortedSet<String> getItems() {

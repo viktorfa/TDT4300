@@ -43,6 +43,7 @@ public class ItemSet implements Comparable {
         }
         count = 0;
     }
+
     public ItemSet(Set<String> items) {
         this.items = new TreeSet<>();
         this.items.addAll(items);

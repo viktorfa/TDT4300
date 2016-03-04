@@ -2,6 +2,7 @@ import no.ntnu.idi.tdt4300.apriori.Apriori;
 import no.ntnu.idi.tdt4300.apriori.ItemSet;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -41,8 +42,6 @@ public class AprioriTest {
     @Test
     public void testGenerateFrequentItemsets() throws Exception {
         String csvOutput = Apriori.generateFrequentItemsets(transactions, SUPPORT);
-        System.out.println("Actual frequent item sets:");
-        System.out.println(csvOutput);
         Pattern pattern = Pattern.compile("size;items\n(\\d+;([-_\\w]+,)*[-_\\w]+\n)*");
         assertTrue(pattern.matcher(csvOutput).matches());
     }
@@ -50,8 +49,6 @@ public class AprioriTest {
     @Test
     public void testGenerateAssociationRules() throws Exception {
         String csvOutput = Apriori.generateAssociationRules(transactions, SUPPORT, CONFIDENCE);
-        System.out.println("Actual association rules:");
-        System.out.println(csvOutput);
         Pattern pattern = Pattern.compile("antecedent;consequent;confidence;support\n(([-_\\w]+,)*[-_\\w]+;([-_\\w]+,)*[-_\\w]+;\\d.\\d{1,2};\\d.\\d{1,2}\n)*");
         assertTrue(pattern.matcher(csvOutput).matches());
     }
@@ -81,8 +78,6 @@ public class AprioriTest {
         ItemSet set2 = new ItemSet("milk");
         ItemSet set3 = new ItemSet("eggs");
 
-        System.out.println("Actual item sets:");
-        System.out.println(actual);
 
         assertTrue(actual.contains(set1));
         assertTrue(actual.contains(set2));
@@ -100,8 +95,6 @@ public class AprioriTest {
         ItemSet set3 = new ItemSet("eggs");
         set3.addItem("diapers");
 
-        System.out.println("Actual item sets:");
-        System.out.println(actual);
 
         assertTrue(actual.contains(set1));
         assertTrue(actual.contains(set2));
@@ -111,8 +104,6 @@ public class AprioriTest {
     @Test
     public void testGetItemSetsWithSize3() {
         Set<ItemSet> actual = Apriori.getItemSets(transactions, new HashMap<ItemSet, Set<Integer>>(), 3, 3);
-        System.out.println("Transactions:");
-        System.out.println(transactions);
 
         ItemSet set1 = new ItemSet("bread");
         set1.addItem("milk");
@@ -120,13 +111,6 @@ public class AprioriTest {
         ItemSet set2 = new ItemSet("milk");
         set2.addItem("diapers");
         set2.addItem("eggs");
-
-        System.out.println("Actual item sets:");
-        System.out.println(actual);
-        System.out.println("set1:");
-        System.out.println(set1);
-        System.out.println("set2:");
-        System.out.println(set2);
 
         assertTrue(actual.contains(set1));
         assertFalse(actual.contains(set2));
@@ -171,7 +155,7 @@ public class AprioriTest {
 
         assertNotEquals(set1.hashCode(), set2.hashCode());
     }
-    
+
     @Test
     public void testIsNewItemSet() {
         Set<Integer> withBread = new TreeSet<>();
@@ -197,7 +181,7 @@ public class AprioriTest {
         Set<Integer> withEggs = new TreeSet<>();
         withEggs.add(1);
 
-        
+
         assertTrue(Apriori.isNewItemSet(withBread, Apriori.getOccurences(transactions).get("milk"), 2));
         assertTrue(Apriori.isNewItemSet(withMilk, Apriori.getOccurences(transactions).get("diapers"), 2));
         assertTrue(Apriori.isNewItemSet(withBreadAndMilk, Apriori.getOccurences(transactions).get("diapers"), 2));
@@ -250,9 +234,6 @@ public class AprioriTest {
 
         Set<ItemSet> actual = Apriori.powerSet(itemSet1);
 
-        System.out.println("actual power set:");
-        System.out.println(actual);
-
         ItemSet expected1 = new ItemSet("eggs");
         ItemSet expected2 = new ItemSet(expected1, "bacon");
         ItemSet expected3 = new ItemSet(expected1, "chicken");
@@ -291,8 +272,6 @@ public class AprioriTest {
 
         actual = Apriori.supportCount(itemSet1, itemSet2, transactions);
         assertEquals(0.75d, actual, DELTA);
-
-        System.out.println(String.format("actual support count: %f", actual));
     }
 
     @Test

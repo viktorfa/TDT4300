@@ -81,24 +81,18 @@ public class Apriori {
     public static String generateFrequentItemsets(List<SortedSet<String>> transactions, double support) {
         // TODO: Generate and print frequent itemsets given the method parameters.
 
-        System.out.println("Transactions:");
-        System.out.println(transactions);
 
         int minSupport = (int) (transactions.size() * support);
 
-        System.out.println("minSupport: " + minSupport);
 
         Map<String, Set<Integer>> occurences = getOccurences(transactions);
 
-        System.out.println(occurences);
 
         Set<ItemSet> itemSets = getItemSets(transactions, new HashMap<>(), minSupport, 100);
 
         StringBuilder result = new StringBuilder();
         result.append("size;items\n");
 
-        System.out.println("itemSets from generateFrequentItemsets:");
-        System.out.println(itemSets);
 
         int setSize = 0;
         for (ItemSet set : itemSets.stream().sorted().collect(Collectors.toList())) {
@@ -159,13 +153,6 @@ public class Apriori {
             int minSupport,
             int maxSize) {
 
-        System.out.println("Called getItemSets");
-        System.out.println("transactions");
-        System.out.println(transactions);
-        System.out.println("occurences");
-        System.out.println(occurences);
-        System.out.println(String.format("minSupport: %d, maxSize: %d", minSupport, maxSize));
-
         int initialItemSets = occurences.size();
 
         if (maxSize < 1) maxSize = 1;
@@ -174,8 +161,6 @@ public class Apriori {
             if (set.size() > currentMaxItemSetSize) currentMaxItemSetSize = set.size();
         }
         if (currentMaxItemSetSize >= maxSize) {
-            System.out.println("Returning because max item set size is reached");
-            System.out.println(String.format("Current: %d, Max: %d", currentMaxItemSetSize, maxSize));
             return occurences.keySet();
         }
         Set<ItemSet> result = new TreeSet<>();
@@ -188,15 +173,11 @@ public class Apriori {
                 }
             }
         }
-        System.out.println("Result:");
-        System.out.println(result);
         Set<ItemSet> itemSets = new TreeSet<>(occurences.keySet());
         for (ItemSet itemSet : itemSets) {
             for (Map.Entry<String, Set<Integer>> entry : getOccurences(transactions).entrySet()) {
                 if (entry.getValue().size() >= minSupport) {
                     if (itemSet.size() > 1) {
-                        System.out.println("Got large itemSet");
-                        System.out.println(itemSet);
                     }
                     if (isNewItemSet(occurences.get(itemSet), entry.getValue(), minSupport)) {
                         result.add(new ItemSet(itemSet, entry.getKey()));
@@ -221,12 +202,6 @@ public class Apriori {
     public static boolean isNewItemSet(Set<Integer> itemSetOccurences, Set<Integer> itemOccurences, int minSupport) {
         Set<Integer> intersection = new TreeSet<>(itemOccurences);
         intersection.retainAll(itemSetOccurences);
-        System.out.println("Got itemSetOccurences:");
-        System.out.println(itemSetOccurences);
-        System.out.println("Got itemOccurences:");
-        System.out.println(itemOccurences);
-        System.out.println("Got intersection:");
-        System.out.println(intersection);
         if (intersection.size() >= minSupport) return true;
         else return false;
     }
@@ -243,12 +218,6 @@ public class Apriori {
     public static String generateAssociationRules(List<SortedSet<String>> transactions, double support, double confidence) {
         // TODO: Generate and print association rules given the method parameters.
 
-        System.out.println("transactions:");
-        System.out.println(transactions);
-        System.out.println("support:");
-        System.out.println(support);
-        System.out.println("confidence:");
-        System.out.println(confidence);
         int minSupport = (int) (transactions.size() * support);
         Set<ItemSet> itemSets = getItemSets(transactions, new HashMap<>(), minSupport, 100);
 

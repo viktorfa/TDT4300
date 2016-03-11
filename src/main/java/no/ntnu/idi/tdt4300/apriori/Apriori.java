@@ -80,7 +80,7 @@ public class Apriori {
      * @return frequent itemsets in CSV format with columns size and items; columns are semicolon-separated and items are comma-separated
      */
     public static String generateFrequentItemsets(List<SortedSet<String>> transactions, double support) {
-        int minSupport = (int) (transactions.size() * support);
+        int minSupport = getMinSupport(support, transactions.size());
 
 
         Map<String, Set<Integer>> occurences = getOccurences(transactions);
@@ -128,6 +128,16 @@ public class Apriori {
         }
 
         return result;
+    }
+
+    /**
+     * Calculates the minimum size an item set needs to be frequent.
+     * @param support
+     * @param size
+     * @return
+     */
+    public static int getMinSupport(double support, int size) {
+        return (int) Math.ceil(support * size);
     }
 
     /**
@@ -220,7 +230,7 @@ public class Apriori {
      * @return association rules in CSV format with columns antecedent, consequent, confidence and support; columns are semicolon-separated and items are comma-separated
      */
     public static String generateAssociationRules(List<SortedSet<String>> transactions, double support, double confidence) {
-        int minSupport = (int) (transactions.size() * support);
+        int minSupport = getMinSupport(support, transactions.size());
         Set<ItemSet> itemSets = getItemSets(transactions, new HashMap<>(), minSupport);
 
         StringBuilder result = new StringBuilder();
